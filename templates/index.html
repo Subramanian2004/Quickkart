@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickKart — Grocery Delivery</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<header class="topbar">
+    <div class="brand"><span>Quick</span>Kart</div>
+    <div class="location-pill">📍 <div><small>Deliver to</small><strong>Home • 30 mins</strong></div></div>
+    <div class="search-wrap">
+        <span>⌕</span>
+        <input id="searchInput" type="search" placeholder="Search for atta, milk, snacks...">
+        <button id="clearSearch" class="clear-search" aria-label="Clear search">×</button>
+    </div>
+    <button id="ordersBtn" class="outline-btn">Orders</button>
+    <button id="cartBtn" class="cart-btn">🛒 Cart <span id="cartCount">0</span></button>
+</header>
+
+<main>
+    <section class="hero">
+        <div>
+            <p class="eyebrow">GROCERIES AT YOUR DOOR</p>
+            <h1>Fresh essentials.<br><span>Fast delivery.</span></h1>
+            <p class="hero-copy">Shop everyday groceries, snacks and personal care products from one clean, simple storefront.</p>
+            <div class="hero-actions">
+                <button class="primary-btn" onclick="scrollToProducts()">Shop now</button>
+                <button class="soft-btn" onclick="openChat()">Ask Shopping AI ✨</button>
+            </div>
+        </div>
+        <div class="hero-art">
+            <div class="delivery-card"><span>⚡</span><div><b>Quick delivery</b><small>Fresh essentials, fast.</small></div></div>
+            <div class="floating-bubble b1">🥛</div>
+            <div class="floating-bubble b2">🍎</div>
+            <div class="floating-bubble b3">🍞</div>
+            <div class="basket">🛒</div>
+        </div>
+    </section>
+
+    <section class="category-section">
+        <div class="section-heading">
+            <div><p class="eyebrow">BROWSE</p><h2>Shop by category</h2></div>
+        </div>
+        <div class="category-row" id="categoryRow">
+            {% for category in categories %}
+            <button class="category-chip {% if category == 'All' %}active{% endif %}" data-category="{{ category }}">{{ category }}</button>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="products-section" id="productsSection">
+        <div class="section-heading">
+            <div><p class="eyebrow">HANDPICKED FOR YOU</p><h2 id="productHeading">Popular groceries</h2></div>
+            <div id="resultCount" class="result-count"></div>
+        </div>
+        <div class="products-grid" id="productsGrid"></div>
+        <div id="emptyState" class="empty-state hidden">
+            <div>🔎</div>
+            <h3>No products found</h3>
+            <p>Try another search or category.</p>
+        </div>
+    </section>
+</main>
+
+<button class="ai-fab" id="chatFab" onclick="openChat()">
+    <span>✨</span>
+    <div><b>Shopping AI</b><small>Ask me to shop</small></div>
+</button>
+
+<div class="overlay hidden" id="overlay"></div>
+
+<aside class="side-panel cart-panel" id="cartPanel">
+    <div class="panel-header"><div><p class="eyebrow">YOUR BAG</p><h2>Shopping cart</h2></div><button class="icon-btn" onclick="closePanels()">×</button></div>
+    <div class="panel-body" id="cartBody"></div>
+</aside>
+
+<aside class="side-panel chat-panel" id="chatPanel">
+    <div class="chat-header">
+        <div class="chat-avatar">✨</div>
+        <div><h2>Shopping AI</h2><p>Powered by Gemini</p></div>
+        <button class="icon-btn" onclick="closePanels()">×</button>
+    </div>
+    <div class="chat-suggestions">
+        <button onclick="useSuggestion('Add 2 atta')">Add 2 atta</button>
+        <button onclick="useSuggestion('Show me snacks')">Show snacks</button>
+        <button onclick="useSuggestion('What is in my cart?')">My cart</button>
+    </div>
+    <div class="chat-messages" id="chatMessages">
+        <div class="chat-message bot">
+            <div class="message-avatar">✨</div>
+            <div class="bubble">Hi! Tell me what you want to add, remove or find. For example: <b>“add 2 milk and one bread”</b>.</div>
+        </div>
+    </div>
+    <div class="chat-input-area">
+        <input id="chatInput" placeholder="Try “add 2 milk”..." autocomplete="off">
+        <button id="chatSend">➤</button>
+    </div>
+</aside>
+
+<aside class="side-panel orders-panel" id="ordersPanel">
+    <div class="panel-header"><div><p class="eyebrow">HISTORY</p><h2>Your orders</h2></div><button class="icon-btn" onclick="closePanels()">×</button></div>
+    <div class="panel-body" id="ordersBody"></div>
+</aside>
+
+<div class="modal hidden" id="productModal">
+    <div class="modal-card" id="productModalBody"></div>
+</div>
+
+<div class="modal hidden" id="checkoutModal">
+    <div class="modal-card checkout-card">
+        <button class="modal-close" onclick="closeCheckout()">×</button>
+        <p class="eyebrow">FINAL STEP</p>
+        <h2>Checkout</h2>
+        <div id="checkoutSummary"></div>
+        <label>Delivery address
+            <textarea id="addressInput" rows="3" placeholder="House / flat, street, city"></textarea>
+        </label>
+        <label>Payment
+            <select id="paymentMethod">
+                <option value="COD">Cash on Delivery</option>
+                <option value="DEMO">Demo online payment</option>
+            </select>
+        </label>
+        <button class="primary-btn full" id="placeOrderBtn">Place order</button>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
